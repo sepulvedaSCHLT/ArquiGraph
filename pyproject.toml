@@ -42,6 +42,10 @@ packages = ["arquigraph"]
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+# ruff formatea los bloques ```python dentro de markdown. En docs/ son
+# ilustrativos: alineamos comentarios para que se lean mejor, y eso no
+# tiene por que pasar por el formateador del codigo real.
+extend-exclude = ["docs/"]
 
 [tool.ruff.lint]
 select = [
