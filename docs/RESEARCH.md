@@ -42,23 +42,47 @@ Por lo tanto, el valor de ArquiGraph **no está en guardar más contexto**, sino
 
 ### 2.1 El estudio
 
-**"Evaluating AGENTS.md: Are Repository-Level Context Files Helpful for Coding Agents?"** — Gloaguen et al., ETH Zurich, febrero 2026 ([arXiv 2602.11988](https://arxiv.org/pdf/2602.11988)).
+> **Gloaguen, T., Mündler, N., Müller, M., Raychev, V., Vechev, M. (2026).**
+> *Evaluating AGENTS.md: Are Repository-Level Context Files Helpful for Coding Agents?*
+> arXiv:2602.11988 [cs.SE]. Enviado el 12 feb 2026, revisado (v2) el 23 jun 2026. Licencia CC BY 4.0.
+> **<https://arxiv.org/abs/2602.11988>**
 
-**Metodología:** cuatro agentes de codificación (Claude Code con Sonnet 4.5, Codex con GPT-5.2, Codex con GPT-5.1 Mini, Qwen Code con Qwen3-30B) sobre cientos de issues reales de GitHub, en tres condiciones: sin archivo de contexto, con archivo generado por LLM, y con archivo escrito por un desarrollador.
+**Metodología**, según el abstract: se evalúa el desempeño de agentes de codificación en **dos escenarios complementarios**:
 
-### 2.2 Resultados
+1. Tareas de SWE-bench sobre repositorios populares, con archivos de contexto **generados por LLM**.
+2. Una colección nueva de issues de repositorios que ya contenían archivos de contexto **escritos por desarrolladores**.
 
-| Condición | Tasa de éxito | Costo de inferencia |
-|---|---|---|
-| Sin archivo de contexto | *línea base* | *línea base* |
-| `AGENTS.md` generado por LLM | **−3%** | **+20%** |
-| `AGENTS.md` escrito por humano | +4% | **+19%** |
+### 2.2 Resultados verificados
+
+Todo lo de esta tabla es **cita directa del abstract**. Nada inferido.
+
+| Hallazgo | Texto original |
+|---|---|
+| El coste sube | *"increasing inference cost by **over 20% on average**"* |
+| El éxito no mejora | *"providing context files **does not generally improve** task success rates"* |
+| Es general, no anecdótico | *"holds across different LLMs, coding agents, and for both LLM-generated and developer-committed context files"* |
+| Los resúmenes de repositorio no ayudan | *"**repository overviews**, although popular and recommended by model providers, **are not helpful**"* |
+| Y sin embargo, sirven para algo | *"context files **are** useful for specifying **non-standard coding practices**"* |
+
+> ⚠️ **Nota de integridad.** Versiones anteriores de este documento citaban un desglose (−3% de éxito con archivos generados por LLM, +4% y +19% con archivos humanos). **Esas cifras procedían de resúmenes de terceros y no se han podido verificar contra el paper.** Se han retirado. Si alguien necesita el desglose por condición, hay que leer el PDF completo y citar la tabla concreta.
 
 ### 2.3 El mecanismo de la falla
 
-Los autores identifican la causa y es contraintuitiva: **los agentes sí siguen las instrucciones**. Precisamente por eso ejecutan más tests, leen más archivos, corren más `grep` y hacen más verificaciones de calidad de las que la tarea concreta requiere. La instrucción genérica ("siempre corre la suite completa", "siempre revisa el linter") es correcta en abstracto e innecesaria en el 90% de los casos particulares.
+El abstract lo dice sin ambigüedad: **las instrucciones se siguen bien** (*"instructions in the context files are well followed by coding agents"*). El problema no es que el agente ignore el archivo; es que lo obedece, y buena parte de lo que contiene no aplica a la tarea concreta.
 
-El resultado neto es ruido, pasos redundantes y restricciones que no aplican.
+Y lo que específicamente no funciona son los **resúmenes del repositorio** —el "aquí tienes una descripción de la arquitectura"— que es justo lo que los proveedores de modelos recomiendan poner.
+
+### 2.4 Lectura precisa: qué autoriza y qué prohíbe
+
+El paper **no dice que el contexto sea inútil**. Dice dos cosas distintas, y la diferencia gobierna el diseño de ArquiGraph:
+
+| El paper | Consecuencia para ArquiGraph |
+|---|---|
+| Los **resúmenes de repositorio** no ayudan y cuestan | ArquiGraph **no es un overview precargado**. Ese patrón está refutado. |
+| Las **prácticas no estándar** sí merecen especificarse | Servir hechos concretos y verificables, bajo demanda, es el uso que el paper avala. |
+| Cualquier intento de mejorar el desempeño **debe evaluarse con rigor antes de desplegarse** | Es literalmente P7 y el criterio de kill de R1. |
+
+La última fila es la más incómoda y la más útil: los propios autores concluyen que estas cosas hay que medirlas antes de creérselas. Este proyecto se somete a su propia regla.
 
 ### 2.4 Consecuencia directa para ArquiGraph
 

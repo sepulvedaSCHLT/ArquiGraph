@@ -12,24 +12,29 @@ Un grafo determinista del código, una memoria anclada a él que caduca sola, y 
 
 Abres una sesión nueva con tu agente. Le pides que extienda el módulo de autenticación. Y vuelves a explicarle la arquitectura, vuelves a aclarar las convenciones, y vuelves a señalarle que la librería de validación compartida ya existe.
 
-La respuesta habitual es escribir un `AGENTS.md` más completo. **La evidencia dice que eso empeora las cosas.**
+La respuesta habitual es escribir un `AGENTS.md` más completo. **La evidencia dice que eso no funciona como se espera.**
 
-Un estudio de ETH Zurich (feb 2026) midió agentes de codificación sobre cientos de issues reales de GitHub:
+Gloaguen et al. (ETH Zurich, 2026) evaluaron agentes de codificación con y sin archivos de contexto, en dos escenarios: tareas de SWE-bench con archivos generados por LLM, y issues reales de repositorios con archivos escritos por sus desarrolladores. Citando el abstract:
 
-| Condición | Tasa de éxito | Coste |
-|---|---|---|
-| `AGENTS.md` generado por LLM | **−3 %** | **+20 %** |
-| `AGENTS.md` escrito por humano | +4 % | +19 % |
+> *"providing context files **does not generally improve** task success rates, while **increasing inference cost by over 20% on average**"*
+>
+> *"**repository overviews**, although popular and recommended by model providers, **are not helpful**"*
+>
+> *"context files **are** useful for specifying **non-standard coding practices**"*
+
+— [arXiv:2602.11988](https://arxiv.org/abs/2602.11988)
 
 La causa es contraintuitiva: **el agente obedece bien**. Por eso ejecuta pasos correctos en abstracto e innecesarios para la tarea concreta.
 
-El problema no es que le falte documentación. Es que le sobra contexto irrelevante.
+El problema no es que le falte documentación. Es que le sobra contexto irrelevante — y en particular, el "resumen del repositorio" que todo el mundo recomienda escribir.
 
 ---
 
 ## El enfoque
 
 ArquiGraph no precarga conocimiento. Lo **sirve bajo demanda, con presupuesto y con fecha de caducidad**.
+
+Nótese la distinción que hace el paper: lo refutado es el **resumen de repositorio precargado**. Especificar prácticas concretas sí tiene valor. ArquiGraph está del lado que la evidencia avala — hechos verificables, servidos cuando se piden — y explícitamente **no** construye un overview que se inyecte en cada sesión.
 
 ### Buscar frente a navegar
 
