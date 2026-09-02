@@ -1,0 +1,2 @@
+{"type": "system", "subtype": "init", "session_id": "b41c07de-55a2-4f1e-8c30-2ad9e4f10c77", "claude_code_version": "2.1.257", "model": "claude-sonnet-5", "cwd": "/tmp/bench/proyecto-1234", "permissionMode": "default", "mcp_servers": [], "tools": ["Bash", "Read"], "plugins": []}
+{"type": "assistant", "message": {"content": [{"type": "tool_use", "name": "Bash", "input": {"command": "python -m pytest -q"}}]}}

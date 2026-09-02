@@ -76,6 +76,25 @@ Esto es exactamente el mecanismo por el que el `AGENTS.md` inflado sube el coste
 
 ---
 
+## 3.1 Segunda medición: el coste crece con los turnos, no con el trabajo
+
+Segunda captura, esta vez con una herramienta de por medio — leer un archivo de 20 bytes y responder en una palabra:
+
+| | Prompt trivial (1 turno) | Con una lectura (2 turnos) |
+|---|---|---|
+| Tokens de trabajo | 6 | 72 |
+| Tokens de contexto | 18.821 | 39.509 |
+| Turnos | 1 | 2 |
+| **Coste** | **$0.092** | **$0.122** |
+
+El trabajo se multiplicó por doce; el coste subió un 32%. La diferencia no está en lo que se pidió: está en **volver a pagar el contexto entero en el segundo turno**.
+
+> Cada turno arrastra todo lo acumulado. Un archivo leído por error en el turno 3 se sigue pagando en el turno 40.
+
+Es la fuga #3 de [RESEARCH.md §3.1](./RESEARCH.md) —el coste compuesto de la exploración a ciegas— medida directamente. Y es el argumento cuantitativo de [ARCHITECTURE.md §2.1](./ARCHITECTURE.md): el ahorro de navegar en vez de buscar no es la diferencia de una lectura, sino esa diferencia **multiplicada por los turnos que queden**.
+
+---
+
 ## 4. Decisión: `total_cost_usd` es la métrica primaria
 
 Con caché de por medio, "tokens totales" es una métrica ambigua: un token de `cache_read` no cuesta lo mismo que uno de entrada normal, ni que uno de `cache_creation`.
