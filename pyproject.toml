@@ -8,10 +8,9 @@ license = { text = "Apache-2.0" }
 authors = [{ name = "Alfonso Schultz", email = "alfonsoschult@gmail.com" }]
 keywords = ["ai-agents", "knowledge-graph", "code-analysis", "mcp", "tree-sitter"]
 
-dependencies = [
-    "tree-sitter",
-    "tree-sitter-python",
-]
+# Cero dependencias de ejecucion en Fase 0 (ADR-009): el parser de Python
+# usa `ast` de la libreria estandar y el almacenamiento es SQLite.
+dependencies = []
 
 [project.optional-dependencies]
 mcp = ["mcp"]

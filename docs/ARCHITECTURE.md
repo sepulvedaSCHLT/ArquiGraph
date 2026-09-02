@@ -562,6 +562,7 @@ La **Fase 2 es independiente** de la tesis de memoria: aporta valor aunque R1 sa
 | [ADR-006](./adr/ADR-006-verificacion.md) | Verificación obligatoria para persistir procedimientos |
 | [ADR-007](./adr/ADR-007-licencia.md) | Licencia Apache 2.0 y banco reproducible por terceros |
 | [ADR-008](./adr/ADR-008-resolucion-de-aristas.md) | Tres niveles de resolución de aristas con `confidence` |
+| [ADR-009](./adr/ADR-009-parser-python-ast.md) | El parser de Python usa `ast`, no `tree-sitter` |
 
 ---
 
@@ -574,12 +575,12 @@ Decidida a partir del stack real del autor. La regla: **lo que ArquiGraph necesi
 | Herramienta | Rol |
 |---|---|
 | Python 3.12 + `uv` | Núcleo y distribución en un comando |
-| `tree-sitter` (MIT) | Extracción AST. **Python en Fase 0; TypeScript/JavaScript en Fase 1.5** |
-| SQLite | Almacenamiento (librería estándar) |
+| `ast` (librería estándar) | Extracción AST de Python ([ADR-009](./adr/ADR-009-parser-python-ast.md)) |
+| SQLite (librería estándar) | Almacenamiento |
 | SDK de MCP | Servidor de las cuatro herramientas |
 | Git | Hooks de las tres compuertas |
 
-**Nada más.** Sin Docker, sin servicios, sin base de datos externa (C9). Cada dependencia añadida es fricción de adopción, y la adopción es el objetivo del proyecto.
+**Cero dependencias de ejecución.** Todo sale de la librería estándar. Sin Docker, sin servicios, sin base de datos externa (C9). Cada dependencia añadida es fricción de adopción, y la adopción es el objetivo del proyecto.
 
 ### 16.2 Dependencias de desarrollo y demostración
 
