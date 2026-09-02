@@ -218,13 +218,45 @@ Si no discrimina, no mide nada. Debe verificarse con un script, nunca a ojo.
 
 ```bash
 claude -p "<problem_statement>" \
-  --settings bench/config/settings.bench.json \
-  --model "<fijado>" \
-  --allowedTools "Read,Edit,Bash,Glob,Grep" \
+  --model claude-sonnet-5 \
+  --tools "Read,Edit,Bash" \
+  --allowedTools "Read,Edit,Bash" \
+  --strict-mcp-config \
   --output-format stream-json \
   --include-hook-events \
   --verbose
 ```
+
+Cada bandera está aquí por una medición, no por una suposición. Los cinco pre-vuelos están en [FINDINGS-token-accounting.md §3.2](./FINDINGS-token-accounting.md).
+
+| Bandera | Por qué |
+|---|---|
+| `--strict-mcp-config` | **Es la que aísla.** Sin ella se cargan los servidores MCP de la cuenta: 69 herramientas extra y el coste base pasa de $0.025 a $0.234. |
+| `--tools` **y** `--allowedTools` | La misma lista en ambas. `--tools` controla qué herramientas **existen**; `--allowedTools`, cuáles se auto-aprueban. Pasar solo la segunda deja 95 en el prompt de sistema. |
+| `Read,Edit,Bash` | Tres, no cinco: `Glob` y `Grep` **no existen** con esos nombres en el conjunto integrado. El agente busca con `Bash`. |
+| `--model claude-sonnet-5` | Identificador completo, no el alias `sonnet`: el mismo valor se compara contra el `init` para verificar el aislamiento. |
+
+### Lo que NO se usa, y por qué
+
+| | |
+|---|---|
+| `--settings` | **No aísla nada.** Un archivo con `enabledPlugins: {}` deja los plugins y los servidores MCP cargados igual. El banco no lo pasa. |
+| `--bare` | Aísla mejor pero **rompe la autenticación**: solo admite `ANTHROPIC_API_KEY`, no la sesión OAuth de suscripción (`"Not logged in · Please run /login"`). Prohibido en el código. |
+
+### Modo B
+
+La misma bandera sirve simétricamente, y esa simetría es lo que hace limpia la comparación:
+
+```bash
+  --mcp-config bench/config/arquigraph.mcp.json \
+  --strict-mcp-config
+```
+
+En A, `--strict-mcp-config` sin `--mcp-config` deja **cero** servidores. En B deja **solo ArquiGraph**. Así, la diferencia de coste entre ambos incluye el manifiesto de ArquiGraph y nada más.
+
+### Lo que no se pudo aislar
+
+Los **cuatro plugins** del autor se cargan en ambos modos. `--bare` los quitaría pero rompe la autenticación. Se asumen como **offset constante**: no alteran la diferencia que mide R1, aunque inflan la línea base y diluyen el efecto relativo. `check_isolation` los admite con `allow_plugins=True`, y el informe declara el entorno realmente observado.
 
 `bench/config/settings.bench.json` — versionado en el repo:
 

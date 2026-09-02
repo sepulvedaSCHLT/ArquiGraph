@@ -18,7 +18,11 @@ BENCH = RAIZ / "bench"
 # El identificador completo, no el alias: el mismo valor se le pasa al
 # agente y se compara con el `init` para verificar el aislamiento.
 MODELO_POR_DEFECTO = "claude-sonnet-5"
-HERRAMIENTAS_POR_DEFECTO = "Read,Edit,Bash,Glob,Grep"
+# Tres, no cinco: `Glob` y `Grep` no existen con esos nombres en el
+# conjunto integrado --al pedirlos, el `init` devolvia solo `Bash`, `Edit`
+# y `Read`--, y el agente busca con `Bash`. La misma lista alimenta
+# `--tools` y `--allowedTools` (FINDINGS-token-accounting 3.2).
+HERRAMIENTAS_POR_DEFECTO = "Read,Edit,Bash"
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -48,7 +52,9 @@ def _analizador() -> argparse.ArgumentParser:
     ejecutar.add_argument("--tope-usd", type=float, dest="tope_usd")
     ejecutar.add_argument("--modelo", default=MODELO_POR_DEFECTO)
     ejecutar.add_argument("--herramientas", default=HERRAMIENTAS_POR_DEFECTO)
-    ejecutar.add_argument("--settings", type=Path, default=BENCH / "config/settings.bench.json")
+    # Sin valor por defecto: `--settings` no desactiva plugins ni MCP, asi
+    # que el banco no lo pasa salvo que se pida explicitamente.
+    ejecutar.add_argument("--settings", type=Path, default=None)
     ejecutar.add_argument("--timeout", type=int, default=900)
     ejecutar.add_argument("--interprete-tests", dest="interprete_tests", default=sys.executable)
     ejecutar.add_argument("--tareas-dir", type=Path, dest="tareas_dir", default=BENCH / "tasks")

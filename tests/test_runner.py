@@ -11,7 +11,10 @@ Lo que fijan estos tests, en orden de importancia:
 
 - El veredicto sale de ejecutar los tests, nunca de lo que el agente
   diga haber hecho.
-- Una ejecucion sin aislamiento se marca invalida y no entra en la media.
+- El comando lleva las banderas que si aislan: `--strict-mcp-config` y
+  la misma lista en `--tools` y `--allowedTools`.
+- Una ejecucion sin aislamiento --otro modelo, un servidor MCP colado--
+  se marca invalida y no entra en la media.
 - El corpus original no se toca y el temporal se borra siempre.
 - Un fallo del agente --timeout, stream cortado, salida vacia-- es un
   dato que se registra, no una excepcion que tumba la tanda.
@@ -19,9 +22,11 @@ Lo que fijan estos tests, en orden de importancia:
 
 from __future__ import annotations
 
+import ast
 import json
 import sys
 import tempfile
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -33,7 +38,7 @@ from arquigraph.bench.runner.ejecutor import (
     TareaRotaError,
     ejecutar_tarea,
 )
-from arquigraph.bench.runner.informe import construir_informe
+from arquigraph.bench.runner.informe import SIN_ENTORNO, construir_informe, formatear
 from arquigraph.bench.runner.orquestador import ejecutar_banco
 from arquigraph.bench.runner.registro import registro_de
 from arquigraph.bench.runner.tareas import Tarea, cargar_tarea, cargar_tareas
@@ -114,11 +119,10 @@ def tarea(tmp_path: Path, corpus: Path) -> Tarea:
 
 
 @pytest.fixture
-def config(tmp_path: Path) -> ConfiguracionBanco:
+def config() -> ConfiguracionBanco:
     return ConfiguracionBanco(
         modelo=MODELO,
         herramientas=("Read", "Edit", "Bash"),
-        settings=tmp_path / "settings.bench.json",
         timeout_segundos=30,
         interprete_tests=sys.executable,
     )
@@ -137,6 +141,7 @@ def runs(tmp_path: Path) -> Path:
 def stream(
     modelo: str = MODELO,
     plugins: tuple[str, ...] = (),
+    servidores_mcp: tuple[str, ...] = (),
     coste: float = 0.25,
     turnos: int = 3,
     con_result: bool = True,
@@ -152,7 +157,7 @@ def stream(
             "model": modelo,
             "cwd": "/tmp/bench/mini",
             "permissionMode": "default",
-            "mcp_servers": [],
+            "mcp_servers": [{"name": nombre} for nombre in servidores_mcp],
             "tools": ["Read", "Edit", "Bash"],
             "plugins": [{"name": nombre, "version": "1.0.0"} for nombre in plugins],
         },
@@ -208,6 +213,21 @@ def agente(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     return instalar
 
 
+def guarda_el_comando(destino: Path) -> str:
+    """Guion para el agente falso: dejar su propio argv en un archivo."""
+    return f"pathlib.Path({str(destino)!r}).write_text(repr(sys.argv))\n"
+
+
+def comando_ejecutado(destino: Path) -> list[str]:
+    """El argv que recibio el agente, sin el ejecutable."""
+    return ast.literal_eval(destino.read_text())[1:]
+
+
+def valor_de(comando: list[str], bandera: str) -> str:
+    """El argumento que sigue a `bandera`. Falla si la bandera no esta."""
+    return comando[comando.index(bandera) + 1]
+
+
 def ejecutar(tarea: Tarea, config: ConfiguracionBanco, runs: Path) -> ResultadoEjecucion:
     return ejecutar_tarea(tarea, config, repeticion=1, directorio_salida=runs)
 
@@ -215,6 +235,80 @@ def ejecutar(tarea: Tarea, config: ConfiguracionBanco, runs: Path) -> ResultadoE
 def registro_en_disco(runs: Path) -> dict:
     (archivo,) = sorted(runs.glob("*.json"))
     return json.loads(archivo.read_text())
+
+
+# ---------------------------------------------------------------------------
+# El comando: lo unico que aisla de verdad
+# ---------------------------------------------------------------------------
+#
+# Cinco pre-vuelos contra el CLI real dejaron una sola bandera util
+# (FINDINGS-token-accounting 3.2): `--settings` con `enabledPlugins: {}`
+# no desactiva nada, `--plugin-dir` anade en vez de reemplazar, `--tools`
+# no filtra las herramientas de MCP y `--bare` aisla pero rompe la
+# autenticacion OAuth. Queda `--strict-mcp-config`.
+
+
+@pytest.fixture
+def comando(tmp_path: Path, tarea, config, runs, agente):
+    """Ejecuta una tarea y devuelve el argv que recibio el agente."""
+
+    def invocar(configuracion: ConfiguracionBanco | None = None) -> list[str]:
+        destino = tmp_path / "argv.txt"
+        agente(stream(), guarda_el_comando(destino))
+        ejecutar(tarea, configuracion or config, runs)
+        return comando_ejecutado(destino)
+
+    return invocar
+
+
+def test_el_comando_de_modo_a_elimina_los_servidores_mcp(comando) -> None:
+    orden = comando()
+
+    assert "--strict-mcp-config" in orden
+    assert "--mcp-config" not in orden
+
+
+def test_el_comando_nunca_usa_bare(comando) -> None:
+    """Aisla, pero solo admite ANTHROPIC_API_KEY: rompe la sesion OAuth."""
+    assert "--bare" not in comando()
+
+
+def test_las_dos_banderas_de_herramientas_reciben_la_misma_lista(comando) -> None:
+    """`--allowedTools` a secas deja el conjunto integrado entero dentro."""
+    orden = comando()
+
+    assert valor_de(orden, "--tools") == "Read,Edit,Bash"
+    assert valor_de(orden, "--allowedTools") == "Read,Edit,Bash"
+
+
+def test_el_modelo_y_el_enunciado_van_tal_cual(comando, tarea, config) -> None:
+    orden = comando()
+
+    assert valor_de(orden, "-p") == tarea.problem_statement
+    assert valor_de(orden, "--model") == config.modelo
+
+
+def test_sin_settings_la_bandera_se_omite(comando) -> None:
+    """No aisla nada; pasarla por costumbre solo sugiere que si."""
+    assert "--settings" not in comando()
+
+
+def test_con_settings_la_bandera_se_pasa(comando, config, tmp_path) -> None:
+    propios = tmp_path / "settings.bench.json"
+
+    orden = comando(replace(config, settings=propios))
+
+    assert valor_de(orden, "--settings") == str(propios)
+
+
+def test_con_mcp_config_se_pasa_junto_a_strict(comando, config, tmp_path) -> None:
+    """Modo B: `--strict-mcp-config` deja entonces solo ArquiGraph."""
+    servidores = tmp_path / "mcp.arquigraph.json"
+
+    orden = comando(replace(config, mcp_config=servidores))
+
+    assert valor_de(orden, "--mcp-config") == str(servidores)
+    assert "--strict-mcp-config" in orden
 
 
 # ---------------------------------------------------------------------------
@@ -349,13 +443,29 @@ def test_el_veredicto_sale_de_los_tests_no_de_lo_que_diga_el_agente(
 # ---------------------------------------------------------------------------
 
 
-def test_un_stream_con_plugins_invalida_la_ejecucion(tarea, config, runs, agente) -> None:
+def test_un_stream_con_plugins_sigue_siendo_valido(tarea, config, runs, agente) -> None:
+    """`--bare` los quitaria y rompe la autenticacion: se admiten y constan.
+
+    Se cargan igual en A y en B, asi que no alteran la diferencia que
+    mide R1; inflan la linea base y por eso el informe los declara.
+    """
     agente(stream(plugins=("superpowers",)), escribe("calc/suma.py", SUMA_CORRECTA))
 
     resultado = ejecutar(tarea, config, runs)
 
+    assert resultado.valido
+    assert resultado.desviaciones == ()
+    assert registro_en_disco(runs)["agent"]["plugins"] == ["superpowers@1.0.0"]
+
+
+def test_un_servidor_mcp_invalida_la_ejecucion(tarea, config, runs, agente) -> None:
+    """En modo A no debe quedar ninguno: ahi `--strict-mcp-config` si cumple."""
+    agente(stream(servidores_mcp=("gmail",)), escribe("calc/suma.py", SUMA_CORRECTA))
+
+    resultado = ejecutar(tarea, config, runs)
+
     assert not resultado.valido
-    assert any("superpowers" in d for d in resultado.desviaciones)
+    assert any("gmail" in d for d in resultado.desviaciones)
     registro = registro_en_disco(runs)
     assert registro["isolation"]["valid"] is False
     assert registro["isolation"]["deviations"] == list(resultado.desviaciones)
@@ -370,7 +480,7 @@ def test_un_stream_con_otro_modelo_invalida_la_ejecucion(tarea, config, runs, ag
     assert any("modelo" in d for d in resultado.desviaciones)
 
 
-def test_el_modelo_esperado_y_sin_plugins_es_valido(tarea, config, runs, agente) -> None:
+def test_el_modelo_esperado_y_sin_mcp_es_valido(tarea, config, runs, agente) -> None:
     agente(stream(), escribe("calc/suma.py", SUMA_CORRECTA))
 
     resultado = ejecutar(tarea, config, runs)
@@ -386,13 +496,7 @@ def test_el_modelo_esperado_y_sin_plugins_es_valido(tarea, config, runs, agente)
 
 def test_un_timeout_se_registra_y_no_propaga(tarea, config, runs, agente) -> None:
     agente(stream(), "time.sleep(30)\n")
-    impaciente = ConfiguracionBanco(
-        modelo=config.modelo,
-        herramientas=config.herramientas,
-        settings=config.settings,
-        timeout_segundos=1,
-        interprete_tests=config.interprete_tests,
-    )
+    impaciente = replace(config, timeout_segundos=1)
 
     resultado = ejecutar(tarea, impaciente, runs)
 
@@ -488,12 +592,28 @@ def test_imprime_una_linea_por_ejecucion(tarea, config, runs, agente, capsys) ->
 # ---------------------------------------------------------------------------
 
 
-def registro_falso(task_id: str, valida: bool, exito: bool, coste: float, turnos: int) -> dict:
+AGENTE_DEL_BANCO = {
+    "model": MODELO,
+    "plugins": ["superpowers@1.0.0", "ralph-loop@1.0.0", "superdesign@1.0.0", "graphify@1.0.0"],
+    "mcp_servers": [],
+    "tools": ["Read", "Edit", "Bash"],
+}
+
+
+def registro_falso(
+    task_id: str,
+    valida: bool,
+    exito: bool,
+    coste: float,
+    turnos: int,
+    agent: dict | None = AGENTE_DEL_BANCO,
+) -> dict:
     return {
         "run_id": f"2026-09-02T10-00-0{turnos}_{task_id}_A_r1",
         "task_id": task_id,
         "mode": "A",
-        "isolation": {"valid": valida, "deviations": [] if valida else ["plugins activos"]},
+        "agent": agent,
+        "isolation": {"valid": valida, "deviations": [] if valida else ["servidor MCP"]},
         "outcome": {"success": exito},
         "cost": {"total_cost_usd": coste, "num_turns": turnos},
     }
@@ -543,6 +663,43 @@ def test_un_timeout_cuenta_como_intento_pero_no_como_coste() -> None:
     assert t001.con_coste == 1
     assert t001.tasa_exito == pytest.approx(0.5)
     assert t001.coste_medio_usd == pytest.approx(0.10)
+
+
+def test_el_informe_declara_el_entorno_observado() -> None:
+    """Sale del `init`, no de la configuracion: es lo que de verdad corrio."""
+    informe = construir_informe(
+        [registro_falso("T001", valida=True, exito=True, coste=0.10, turnos=8)]
+    )
+
+    assert formatear(informe).splitlines()[0] == (
+        "entorno: claude-sonnet-5 | 4 plugins | 0 servidores MCP | 3 herramientas"
+    )
+
+
+def test_una_tanda_con_dos_entornos_los_declara_los_dos() -> None:
+    """Esconder la mezcla seria promediar cosas que no son la misma."""
+    otro = {**AGENTE_DEL_BANCO, "mcp_servers": [{"name": "arquigraph"}], "plugins": []}
+
+    informe = construir_informe(
+        [
+            registro_falso("T001", valida=True, exito=True, coste=0.10, turnos=8),
+            registro_falso("T003", valida=True, exito=True, coste=0.20, turnos=9, agent=otro),
+        ]
+    )
+
+    assert formatear(informe).splitlines()[:2] == [
+        "entorno: claude-sonnet-5 | 4 plugins | 0 servidores MCP | 3 herramientas",
+        "entorno: claude-sonnet-5 | 0 plugins | 1 servidor MCP | 3 herramientas",
+    ]
+
+
+def test_sin_init_el_entorno_no_se_inventa() -> None:
+    informe = construir_informe(
+        [registro_falso("T001", valida=False, exito=False, coste=0.0, turnos=0, agent=None)]
+    )
+
+    assert informe.entornos == ()
+    assert formatear(informe).splitlines()[0] == f"entorno: {SIN_ENTORNO}"
 
 
 # ---------------------------------------------------------------------------

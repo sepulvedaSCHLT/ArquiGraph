@@ -8,9 +8,13 @@ tres reglas que no son negociables:
    control, el runner corre ``fail_to_pass`` y ``pass_to_pass`` con su
    propio interprete. Que el agente diga "ya esta" no cuenta: puede no
    haberlo comprobado, o haber roto otra cosa.
-2. **Aislamiento verificado en cada ejecucion.** Una ejecucion con los
-   plugins de quien la lanza mide esos plugins, no el baseline; se marca
-   invalida y no entra en la media.
+2. **Aislamiento verificado en cada ejecucion.** El comando se
+   construye para aislar --``--strict-mcp-config``, herramientas
+   fijadas-- y despues se comprueba contra el ``init`` de lo que la
+   ejecucion **hizo**. Una desviacion la marca invalida y la deja fuera
+   de la media. Los plugins del autor son la excepcion declarada: no hay
+   forma de quitarlos sin romper la autenticacion, asi que se admiten
+   como offset constante en A y en B.
 3. **Nada se escribe en el corpus original.** Cada ejecucion trabaja
    sobre una copia en un temporal; ``bench/corpus/`` es de solo lectura.
 
@@ -68,16 +72,32 @@ class ConfiguracionBanco:
     declara. Por eso debe ser el identificador completo que el ``init``
     devuelve; un alias haria fallar el aislamiento en cada ejecucion.
 
+    ``herramientas`` alimenta **las dos** banderas: ``--tools`` decide
+    que herramientas existen y ``--allowedTools`` cuales se
+    auto-aprueban. Pasar solo la segunda deja el conjunto integrado
+    entero en el prompt de sistema.
+
+    ``settings`` es opcional y no aisla nada: probado contra el CLI real,
+    un ``settings.json`` con ``enabledPlugins: {}`` deja los plugins y
+    los servidores MCP cargados (FINDINGS-token-accounting 3.2). Si se
+    pasa se usa; si no, la bandera se omite.
+
+    ``strict_mcp`` es lo que si aisla, y va en los dos modos: en A, sin
+    ``mcp_config``, deja cero servidores; en B, con el, deja solo
+    ArquiGraph. Esa simetria es lo que hace limpia la comparacion.
+
     ``interprete_tests`` existe porque el ``python`` del sistema no tiene
     ``pytest``: el runner recibe la ruta correcta, tipicamente la del
     ``.venv`` del proyecto.
     """
 
     modelo: str
-    herramientas: tuple[str, ...]  # --allowedTools
-    settings: Path  # bench/config/settings.bench.json
+    herramientas: tuple[str, ...]  # --tools y --allowedTools: la misma lista
+    settings: Path | None = None  # opcional: no aisla nada
     timeout_segundos: int = 900
     interprete_tests: str = "python"  # el que usa el RUNNER para evaluar
+    mcp_config: Path | None = None  # solo modo B; en A va None
+    strict_mcp: bool = True  # SIEMPRE True en el banco
 
 
 @dataclass(frozen=True)
@@ -211,24 +231,9 @@ def _invocar_agente(tarea: Tarea, config: ConfiguracionBanco, trabajo: Path) -> 
     Devuelve la salida (``stdout`` y ``stderr`` juntos; el ledger ya
     cuenta las lineas que no son JSON) y si expiro el tiempo.
     """
-    orden = [
-        _ejecutable_agente(),
-        "-p",
-        tarea.problem_statement,
-        "--settings",
-        str(config.settings),
-        "--model",
-        config.modelo,
-        "--allowedTools",
-        ",".join(config.herramientas),
-        "--output-format",
-        "stream-json",
-        "--include-hook-events",
-        "--verbose",
-    ]
     try:
         proceso = subprocess.run(
-            orden,
+            _orden_del_agente(tarea, config),
             cwd=trabajo,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
@@ -239,6 +244,45 @@ def _invocar_agente(tarea: Tarea, config: ConfiguracionBanco, trabajo: Path) -> 
     except subprocess.TimeoutExpired as expirado:
         return _texto(expirado.stdout), True
     return proceso.stdout or "", False
+
+
+def _orden_del_agente(tarea: Tarea, config: ConfiguracionBanco) -> list[str]:
+    """El comando exacto con el que se invoca al agente.
+
+    Las banderas y su orden salen de cinco pre-vuelos contra el CLI real
+    (FINDINGS-token-accounting 3.2). Lo que se aprendio ahi:
+
+    - ``--tools`` y ``--allowedTools`` reciben la misma lista. La primera
+      controla que herramientas existen; la segunda, cuales no piden
+      permiso. Solo la segunda deja el conjunto integrado entero dentro.
+    - ``--strict-mcp-config`` es la unica bandera que quita los
+      servidores MCP sin tocar la autenticacion. Decir "ok" costo $0.2340
+      con 72 herramientas y $0.0251 con 3: el manifiesto MCP es contexto
+      precargado, y se paga se use o no.
+    - ``--bare`` aislaria mas, pero solo admite ``ANTHROPIC_API_KEY`` y
+      rompe la sesion OAuth. No se usa en ninguna ruta de codigo.
+    - ``--settings`` no desactiva nada, asi que se omite si no se pasa.
+    """
+    herramientas = ",".join(config.herramientas)
+    orden = [
+        _ejecutable_agente(),
+        "-p",
+        tarea.problem_statement,
+        "--model",
+        config.modelo,
+        "--tools",
+        herramientas,
+        "--allowedTools",
+        herramientas,
+    ]
+    if config.strict_mcp:
+        orden.append("--strict-mcp-config")
+    if config.mcp_config is not None:
+        orden += ["--mcp-config", str(config.mcp_config)]
+    if config.settings is not None:
+        orden += ["--settings", str(config.settings)]
+    orden += ["--output-format", "stream-json", "--include-hook-events", "--verbose"]
+    return orden
 
 
 def _ejecutable_agente() -> str:
@@ -253,8 +297,18 @@ def _texto(salida: str | bytes | None) -> str:
 
 
 def _entorno_esperado(config: ConfiguracionBanco) -> ExpectedEnvironment:
-    """Modo A: el modelo declarado, sin plugins y sin servidores MCP."""
-    return ExpectedEnvironment(model=config.modelo)
+    """Modo A: el modelo declarado y sin servidores MCP.
+
+    Los servidores MCP siguen sin permitirse: ahi ``--strict-mcp-config``
+    si funciona, y una desviacion significa que algo fallo de verdad.
+    """
+    return ExpectedEnvironment(
+        model=config.modelo,
+        # --bare los eliminaria pero rompe la autenticacion OAuth (FINDINGS
+        # token-accounting 3.2). Son un offset constante en A y en B: no alteran
+        # la diferencia que mide R1, aunque inflan la linea base.
+        allow_plugins=True,
+    )
 
 
 # ---------------------------------------------------------------------------
