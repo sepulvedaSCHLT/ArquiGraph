@@ -98,6 +98,36 @@ Corolario para el recuperador: **una arista `AMBIGUOUS` nunca se sirve como hech
 
 ## A validar
 
-Medir sobre repositorios reales el reparto `EXTRACTED / INFERRED / AMBIGUOUS`.
+### La métrica, corregida (2026-09-01)
 
-> **Umbral orientativo:** si menos del **70%** de las aristas `CALLS` resultan `EXTRACTED` en código Python idiomático, la resolución es demasiado pobre para que `arqui trace` cumpla su función, y hay que reforzar el resolvedor antes de seguir.
+La primera formulación de este umbral era **incorrecta** y la primera medición lo demostró.
+
+Medido sobre el propio repositorio tras el paso 4: **96 `CALLS` `EXTRACTED` frente a 99 `AMBIGUOUS`, un 49%**. Pero el reparto de lo no resuelto lo explica:
+
+- `isinstance` (20), `len` (5) y demás **builtins** — nunca estarán en la tabla de símbolos, y no deberían estarlo.
+- Métodos sobre variables locales (`edges.append`, `conn.execute`) — destinos de la librería estándar o de tipos que no pertenecen al repositorio.
+
+> **Nadie le pregunta al grafo "¿quién llama a `len`?".** Contar esas llamadas en el denominador mide algo que no le importa a nadie.
+
+**Métrica correcta:** tasa de resolución **sobre las llamadas cuyo destino es un nodo del grafo**. Es lo que determina si `arqui trace` puede navegar el código del usuario, que es la única pregunta relevante.
+
+Solo se puede calcular en el paso 5, cuando cada `dst_name` se contrasta contra los `qualified_name` existentes. El parser, que ve un archivo, no puede saberlo.
+
+> **Umbral, reformulado:** de las llamadas cuyo destino **existe como nodo en el grafo**, al menos el **70%** debe resolverse (`EXTRACTED` o `INFERRED`). Por debajo de eso, `arqui trace` no cumple su función y hay que reforzar el resolvedor.
+
+Las llamadas a builtins y a librerías externas se cuentan y se informan aparte, como **cobertura externa**. Son información útil —dicen de qué depende el módulo— pero no miden la calidad de la navegación interna.
+
+### Consecuencia para el paso 4b
+
+Las cuatro reglas de `INFERRED` no cubren un caso frecuente: **método sobre variable local con anotación de tipo**.
+
+```python
+edges: list[ParsedEdge] = []
+edges.append(...)          # ninguna de las cuatro reglas aplica
+```
+
+Añadir las variables locales anotadas (`ast.AnnAssign` dentro del cuerpo) es barato y del mismo orden de certeza que un parámetro anotado. **Se incorpora al paso 4b con `confidence` 0.7**, igual que el parámetro.
+
+### El caso 0.4 no pertenece al parser
+
+"Nombre que coincide con un único símbolo del repositorio" exige ver todo el repositorio. El parser trabaja por archivo y es puro. **Ese caso se resuelve en el paso 5**, sobre el grafo ya construido, no durante el parseo.
