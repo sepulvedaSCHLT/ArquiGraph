@@ -1,0 +1,12 @@
+--- a/tienda/infraestructura/identificadores.py
++++ b/tienda/infraestructura/identificadores.py
+@@ -18,8 +18,7 @@
+         self._contador = 0
+ 
+     def siguiente(self) -> str:
+-        self._contador += 1
+-        return f"{self.prefijo}-{self._contador:0{self.ancho}d}"
++        return f"{self.prefijo}-{self._contador + 1:0{self.ancho}d}"
+ 
+     def emitidos(self) -> int:
+         return self._contador

@@ -1,0 +1,17 @@
+{
+  "task_id": "T001",
+  "kind": "synthetic",
+  "corpus": "tienda",
+  "bug_patch": "T001.bug.patch",
+  "problem_statement": "Los pedidos con descuento por volumen estan cobrando el IVA sobre el precio sin descontar. Un pedido de 12 unidades a 10.00 con 15% de descuento deberia totalizar 123.42 y esta dando 145.20.",
+  "test_command": "python -m pytest -q",
+  "fail_to_pass": [
+    "tests/test_precios.py::test_iva_sobre_precio_con_descuento"
+  ],
+  "pass_to_pass": [
+    "tests/test_precios.py::test_precio_base_sin_descuento"
+  ],
+  "hint_files": [
+    "tienda/dominio/precios.py"
+  ]
+}

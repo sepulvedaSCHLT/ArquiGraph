@@ -1,0 +1,11 @@
+--- a/tienda/dominio/descuentos.py
++++ b/tienda/dominio/descuentos.py
+@@ -42,7 +42,7 @@
+ def porcentaje_por_volumen(cantidad: int) -> int:
+     """Porcentaje que corresponde a llevar ``cantidad`` unidades."""
+     for minimo, porcentaje in TRAMOS_POR_VOLUMEN:
+-        if cantidad >= minimo:
++        if cantidad > minimo:
+             return porcentaje
+     return 0
+ 

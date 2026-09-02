@@ -1,0 +1,18 @@
+{
+  "task_id": "T004",
+  "kind": "synthetic",
+  "corpus": "tienda",
+  "bug_patch": "T004.bug.patch",
+  "problem_statement": "Los cupones vigentes han dejado de aceptarse. Un pedido de 2 unidades a 20.00 con un cupon del 15% que caduca el 30 de septiembre se rechaza con un 400 el 15 de julio, cuando deberia responder 201 y un total de 47.13. Los cupones ya caducados se siguen rechazando bien, asi que el fallo solo se ve en los que todavia valen.",
+  "test_command": "python -m pytest -q",
+  "fail_to_pass": [
+    "tests/test_api_pedidos.py::test_crear_pedido_con_cupon_vigente"
+  ],
+  "pass_to_pass": [
+    "tests/test_api_pedidos.py::test_crear_pedido_con_cupon_caducado",
+    "tests/test_api_pedidos.py::test_crear_pedido_devuelve_201"
+  ],
+  "hint_files": [
+    "tienda/dominio/descuentos.py"
+  ]
+}

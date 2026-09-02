@@ -1,0 +1,19 @@
+{
+  "task_id": "T003",
+  "kind": "synthetic",
+  "corpus": "tienda",
+  "bug_patch": "T003.bug.patch",
+  "problem_statement": "Los portes de los paquetes pesados salen caros. La tarifa peninsular es 4.95 mas 0.50 por cada kilo que pase de los dos primeros, asi que un articulo de 5 kg deberia pagar 6.45 de portes y esta pagando 7.45. El total de ese pedido sale 17.81 en vez de 16.60.",
+  "test_command": "python -m pytest -q",
+  "fail_to_pass": [
+    "tests/test_envios.py::test_envio_peninsular_de_cinco_kilos",
+    "tests/test_precios.py::test_resumen_con_portes_y_su_iva"
+  ],
+  "pass_to_pass": [
+    "tests/test_envios.py::test_envio_gratis_por_encima_del_umbral",
+    "tests/test_precios.py::test_resumen_de_pedido_con_envio_gratis"
+  ],
+  "hint_files": [
+    "tienda/dominio/envios.py"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "task_id": "T008",
+  "kind": "synthetic",
+  "corpus": "tienda",
+  "bug_patch": "T008.bug.patch",
+  "problem_statement": "Un pedido que consume exactamente todas las existencias se rechaza. Con 10 unidades en stock, pedir 10 responde 409 por falta de stock cuando deberia responder 201 con un total de 205.70 y dejar 0 unidades disponibles. Pedir 9 unidades del mismo articulo funciona sin problema, y pedir 11 se rechaza como corresponde.",
+  "test_command": "python -m pytest -q",
+  "fail_to_pass": [
+    "tests/test_pedidos.py::test_pedido_que_agota_las_existencias_se_acepta"
+  ],
+  "pass_to_pass": [
+    "tests/test_pedidos.py::test_crear_pedido_reserva_inventario",
+    "tests/test_pedidos.py::test_pedido_por_encima_de_las_existencias_se_rechaza"
+  ],
+  "hint_files": [
+    "tienda/dominio/inventario.py"
+  ]
+}

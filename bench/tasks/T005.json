@@ -1,0 +1,18 @@
+{
+  "task_id": "T005",
+  "kind": "synthetic",
+  "corpus": "tienda",
+  "bug_patch": "T005.bug.patch",
+  "problem_statement": "Dos pedidos creados uno detras de otro salen con el mismo numero, PED-0001, y el segundo pisa al primero: el listado del cliente devuelve 1 pedido cuando deberia devolver 2. El primero de una sesion si se crea bien.",
+  "test_command": "python -m pytest -q",
+  "fail_to_pass": [
+    "tests/test_api_pedidos.py::test_dos_pedidos_seguidos_son_dos_pedidos"
+  ],
+  "pass_to_pass": [
+    "tests/test_api_pedidos.py::test_crear_pedido_devuelve_201",
+    "tests/test_api_pedidos.py::test_consultar_pedido"
+  ],
+  "hint_files": [
+    "tienda/infraestructura/identificadores.py"
+  ]
+}

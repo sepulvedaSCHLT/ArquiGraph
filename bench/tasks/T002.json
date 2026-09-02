@@ -1,0 +1,19 @@
+{
+  "task_id": "T002",
+  "kind": "synthetic",
+  "corpus": "tienda",
+  "bug_patch": "T002.bug.patch",
+  "problem_statement": "El descuento por volumen no se aplica cuando la cantidad cae justo en el minimo de un tramo. Un pedido de exactamente 10 unidades a 10.00 totaliza 114.95 cuando deberia totalizar 102.85. Con 11 unidades del mismo articulo el total si sale bien, 113.14.",
+  "test_command": "python -m pytest -q",
+  "fail_to_pass": [
+    "tests/test_precios.py::test_resumen_en_el_minimo_del_tramo",
+    "tests/test_descuentos.py::test_el_tramo_se_alcanza_en_el_minimo_exacto"
+  ],
+  "pass_to_pass": [
+    "tests/test_precios.py::test_resumen_de_pedido_con_envio_gratis",
+    "tests/test_descuentos.py::test_sin_volumen_no_hay_descuento"
+  ],
+  "hint_files": [
+    "tienda/dominio/descuentos.py"
+  ]
+}

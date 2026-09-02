@@ -1,0 +1,11 @@
+--- a/tienda/dominio/precios.py
++++ b/tienda/dominio/precios.py
+@@ -40,7 +40,7 @@
+ 
+ def precio_neto_linea(linea: LineaPedido) -> Dinero:
+     """Precio de la linea ya descontado y todavia sin impuestos."""
+-    return precio_base_linea(linea) - descuento_de_linea(linea)
++    return precio_base_linea(linea)
+ 
+ 
+ def impuesto_de_linea(linea: LineaPedido) -> Dinero:

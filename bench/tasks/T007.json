@@ -1,0 +1,19 @@
+{
+  "task_id": "T007",
+  "kind": "synthetic",
+  "corpus": "tienda",
+  "bug_patch": "T007.bug.patch",
+  "problem_statement": "Todos los importes que no salen exactos se quedan un centimo por debajo. El IVA general de una base de 33.33 se cobra como 6.99 cuando deberia ser 7.00; el 5% de rebaja sobre una linea de 10.15 se aplica como 0.50 cuando deberia ser 0.51; y el IVA de unos portes de 4.95 sale 1.03 en vez de 1.04. Pasa en cualquier calculo con porcentaje, y siempre en la misma direccion.",
+  "test_command": "python -m pytest -q",
+  "fail_to_pass": [
+    "tests/test_impuestos.py::test_cuota_redondea_el_empate_al_alza",
+    "tests/test_precios.py::test_descuento_de_linea_redondea_al_alza"
+  ],
+  "pass_to_pass": [
+    "tests/test_impuestos.py::test_cuota_por_tipo",
+    "tests/test_precios.py::test_precio_base_sin_descuento"
+  ],
+  "hint_files": [
+    "tienda/compartido/dinero.py"
+  ]
+}

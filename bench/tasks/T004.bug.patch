@@ -1,0 +1,11 @@
+--- a/tienda/dominio/descuentos.py
++++ b/tienda/dominio/descuentos.py
+@@ -62,7 +62,7 @@
+ 
+ def cupon_vigente(cupon: Cupon, dia: date) -> bool:
+     """Cierto si el cupon se puede usar ese dia."""
+-    return esta_vigente(dia, cupon.desde, cupon.hasta)
++    return esta_vigente(cupon.desde, cupon.hasta, dia)
+ 
+ 
+ def descuento_por_cupon(base: Dinero, cupon: Cupon | None, dia: date) -> Dinero:

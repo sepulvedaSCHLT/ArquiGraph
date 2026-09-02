@@ -563,6 +563,7 @@ La **Fase 2 es independiente** de la tesis de memoria: aporta valor aunque R1 sa
 | [ADR-007](./adr/ADR-007-licencia.md) | Licencia Apache 2.0 y banco reproducible por terceros |
 | [ADR-008](./adr/ADR-008-resolucion-de-aristas.md) | Tres niveles de resolución de aristas con `confidence` |
 | [ADR-009](./adr/ADR-009-parser-python-ast.md) | El parser de Python usa `ast`, no `tree-sitter` |
+| [ADR-010](./adr/ADR-010-corpus-sintetico.md) | Corpus sintético sin Docker para el banco de Fase 0 |
 
 ---
 

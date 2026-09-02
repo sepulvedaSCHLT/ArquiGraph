@@ -1,0 +1,20 @@
+--- a/tienda/compartido/dinero.py
++++ b/tienda/compartido/dinero.py
+@@ -10,7 +10,7 @@
+ from __future__ import annotations
+ 
+ from dataclasses import dataclass
+-from decimal import ROUND_HALF_UP, Decimal
++from decimal import ROUND_DOWN, Decimal
+ 
+ __all__ = ["CERO", "Dinero"]
+ 
+@@ -20,7 +20,7 @@
+ 
+ def _redondear(valor: Decimal) -> int:
+     """Convierte a centimos enteros redondeando el empate hacia arriba."""
+-    return int(valor.quantize(_UNIDAD, rounding=ROUND_HALF_UP))
++    return int(valor.quantize(_UNIDAD, rounding=ROUND_DOWN))
+ 
+ 
+ @dataclass(frozen=True, order=True)

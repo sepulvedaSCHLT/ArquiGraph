@@ -1,0 +1,18 @@
+{
+  "task_id": "T006",
+  "kind": "synthetic",
+  "corpus": "tienda",
+  "bug_patch": "T006.bug.patch",
+  "problem_statement": "La consulta de un producto falla si la referencia llega en minusculas. Pedir caf-001 responde 404 mientras que CAF-001 responde 200 con ese mismo producto, y la lista completa sigue devolviendo los 6 articulos. Antes daba igual como se escribiera la referencia.",
+  "test_command": "python -m pytest -q",
+  "fail_to_pass": [
+    "tests/test_api_catalogo.py::test_consultar_producto_en_minusculas"
+  ],
+  "pass_to_pass": [
+    "tests/test_api_catalogo.py::test_consultar_producto",
+    "tests/test_api_catalogo.py::test_listar_devuelve_los_seis_productos"
+  ],
+  "hint_files": [
+    "tienda/infraestructura/almacen.py"
+  ]
+}

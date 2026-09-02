@@ -1,0 +1,22 @@
+--- a/tienda/dominio/inventario.py
++++ b/tienda/dominio/inventario.py
+@@ -41,15 +41,15 @@
+         """Unidades que todavia se pueden comprometer."""
+         return self.existencias(referencia) - self.reservado(referencia)
+ 
+-    def reservar(self, referencia: str, cantidad: int) -> bool:
+-        """Aparta unidades. Devuelve si la reserva se pudo hacer."""
++    def reservar(self, referencia: str, cantidad: int) -> int:
++        """Aparta unidades. Devuelve las unidades que quedan libres."""
+         if cantidad <= 0:
+             raise ErrorDeValidacion("la cantidad reservada debe ser positiva")
+         if cantidad > self.disponible(referencia):
+-            return False
++            return 0
+         clave = self._clave(referencia)
+         self._reservado[clave] = self._reservado.get(clave, 0) + cantidad
+-        return True
++        return self.disponible(referencia)
+ 
+     def liberar(self, referencia: str, cantidad: int) -> None:
+         """Deshace una reserva que no llego a cobrarse."""

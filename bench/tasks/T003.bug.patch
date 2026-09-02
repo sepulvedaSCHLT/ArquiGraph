@@ -1,0 +1,15 @@
+--- a/tienda/dominio/envios.py
++++ b/tienda/dominio/envios.py
+@@ -66,10 +66,9 @@
+ 
+ def kilos_extra(peso_gramos: int) -> int:
+     """Kilos que se cobran aparte: los que pasan del peso incluido."""
+-    exceso = peso_gramos - PESO_INCLUIDO_GRAMOS
+-    if exceso <= 0:
++    if peso_gramos <= 0:
+         return 0
+-    return math.ceil(exceso / 1000)
++    return math.ceil(peso_gramos / 1000)
+ 
+ 
+ def coste_envio(zona: str, lineas: Iterable[LineaPedido], base_imponible: Dinero) -> Dinero:

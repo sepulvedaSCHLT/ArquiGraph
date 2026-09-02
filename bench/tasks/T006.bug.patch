@@ -1,0 +1,11 @@
+--- a/tienda/infraestructura/almacen.py
++++ b/tienda/infraestructura/almacen.py
+@@ -27,7 +27,7 @@
+         self._datos[self.normalizar(clave)] = valor
+ 
+     def obtener(self, clave: str) -> T | None:
+-        return self._datos.get(self.normalizar(clave))
++        return self._datos.get(clave)
+ 
+     def existe(self, clave: str) -> bool:
+         return self.normalizar(clave) in self._datos
