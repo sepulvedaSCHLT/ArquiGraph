@@ -183,6 +183,8 @@ Edge {
 
 Toda arista `INFERRED` (imports dinámicos, duck typing, reflexión) se marca como tal y el recuperador la degrada en el ranking. Nunca se presenta como hecho.
 
+Las reglas concretas por caso —qué es `EXTRACTED`, qué es `INFERRED` y con qué `confidence`, y qué queda en `AMBIGUOUS`— están en [ADR-008](./adr/ADR-008-resolucion-de-aristas.md). La regla que lo gobierna: **`confidence` mide certeza de resolución sintáctica, nunca verosimilitud estadística.**
+
 ### 3.4 Identidad de nodo — la decisión más delicada
 
 El `node_id` **no puede** derivarse de números de línea ni de offsets de bytes: cualquier edición trivial invalidaría todas las memorias del archivo y el sistema se volvería inútil (riesgo R2).
@@ -559,6 +561,7 @@ La **Fase 2 es independiente** de la tesis de memoria: aporta valor aunque R1 sa
 | [ADR-005](./adr/ADR-005-superficie.md) | MCP + hooks, cuatro herramientas |
 | [ADR-006](./adr/ADR-006-verificacion.md) | Verificación obligatoria para persistir procedimientos |
 | [ADR-007](./adr/ADR-007-licencia.md) | Licencia Apache 2.0 y banco reproducible por terceros |
+| [ADR-008](./adr/ADR-008-resolucion-de-aristas.md) | Tres niveles de resolución de aristas con `confidence` |
 
 ---
 
