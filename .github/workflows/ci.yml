@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Sincronizar dependencias
+        run: uv sync --all-extras --dev
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Formato
+        run: uv run ruff format --check .
+
+      - name: Tests
+        run: uv run pytest --cov --cov-report=term-missing
+
+  # ---------------------------------------------------------------------
+  # Fase 2: el guardian vigilando los PRs del propio ArquiGraph.
+  # Es la mejor demostracion del proyecto. Se activa cuando exista
+  # `arqui check` (ver docs/ARCHITECTURE.md seccion 6).
+  # ---------------------------------------------------------------------
+  # guardian:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with: { fetch-depth: 0 }
+  #     - uses: astral-sh/setup-uv@v5
+  #     - run: uv sync
+  #     - run: uv run arqui build .
+  #     - run: uv run arqui check --diff origin/${{ github.base_ref }}...HEAD

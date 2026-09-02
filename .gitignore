@@ -1,0 +1,39 @@
+# --- Material de referencia y notas personales (no van al repo publico) ---
+# Sin barra final: coincide tanto si es archivo como si es carpeta.
+ArquiGraph-avance-de-ciclos-bugError
+engram
+graphify-out
+
+# --- Estado propio de ArquiGraph (regenerable) ---
+.arquigraph/
+
+# --- Resultados del banco (pesados; se publica solo el informe) ---
+# Las tareas (bench/tasks/) y la config (bench/config/) SI se versionan:
+# son lo que hace reproducible la medicion.
+bench/runs/
+bench/workdir/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# --- Entorno y secretos ---
+.env
+.env.*
+!.env.example
+
+# --- Editor y SO ---
+.vscode/
+.idea/
+*.swp
+.DS_Store

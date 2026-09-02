@@ -1,0 +1,71 @@
+[project]
+name = "arquigraph"
+version = "0.0.1"
+description = "Grafo determinista, memoria anclada y guardian de invariantes para agentes de programacion"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Alfonso Schultz", email = "alfonsoschult@gmail.com" }]
+keywords = ["ai-agents", "knowledge-graph", "code-analysis", "mcp", "tree-sitter"]
+
+dependencies = [
+    "tree-sitter",
+    "tree-sitter-python",
+]
+
+[project.optional-dependencies]
+mcp = ["mcp"]
+
+[project.scripts]
+arqui = "arquigraph.cli.main:main"
+
+[project.urls]
+Repository = "https://github.com/sepulvedaSCHLT/ArquiGraph"
+Issues = "https://github.com/sepulvedaSCHLT/ArquiGraph/issues"
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "pytest-cov",
+    "ruff",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["arquigraph"]
+
+# ---------------------------------------------------------------------------
+# Lint y formato
+# ---------------------------------------------------------------------------
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E", "W",   # pycodestyle
+    "F",        # pyflakes
+    "I",        # isort
+    "N",        # naming
+    "UP",       # pyupgrade
+    "B",        # bugbear
+    "SIM",      # simplify
+    "RUF",
+]
+
+# ---------------------------------------------------------------------------
+# Tests
+# ---------------------------------------------------------------------------
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+markers = [
+    "bench: pruebas que invocan al agente y cuestan dinero (excluidas por defecto)",
+]
+
+[tool.coverage.run]
+source = ["arquigraph"]
+omit = ["*/tests/*"]
