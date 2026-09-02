@@ -95,6 +95,52 @@ Es la fuga #3 de [RESEARCH.md §3.1](./RESEARCH.md) —el coste compuesto de la 
 
 ---
 
+## 3.2 El coste del manifiesto MCP, medido
+
+Al preparar el aislamiento del banco apareció una comparación controlada: **mismo modelo, mismo prompt, mismo número de turnos**, cambiando únicamente los servidores MCP conectados.
+
+| Configuración | Herramientas en el prompt de sistema | Coste |
+|---|---|---|
+| Cuenta con Gmail, Drive y Slack conectados | 72 | **$0.2340** |
+| `--strict-mcp-config` (sin servidores) | 3 | **$0.0251** |
+
+> **Un 89% menos. Nueve veces más barato decir "ok".**
+
+La única diferencia son las **69 descripciones de herramientas** que tres conectores meten en el prompt de sistema de cada sesión, se usen o no.
+
+### Por qué importa para ArquiGraph
+
+Es la validación empírica de la **regla de las cuatro herramientas** de [ADR-005](./adr/ADR-005-superficie.md): el manifiesto MCP es contexto precargado, y crece sin que nadie lo note. Cada herramienta que ArquiGraph añada se paga en **todas** las sesiones de **todos** sus usuarios, para siempre.
+
+También matiza el hallazgo de §3: no todo el overhead es inevitable. Una parte grande es configuración acumulada que el usuario podría no querer.
+
+### Configuración del banco, ya fijada
+
+```
+--model claude-sonnet-5
+--strict-mcp-config
+--tools "Read,Edit,Bash"
+--allowedTools "Read,Edit,Bash"
+--output-format stream-json --include-hook-events --verbose
+```
+
+`--strict-mcp-config` sirve simétricamente en los dos modos, que es lo que hace limpia la comparación:
+
+| Modo | MCP presentes |
+|---|---|
+| A | ninguno |
+| B | **solo ArquiGraph** (`--mcp-config` + `--strict-mcp-config`) |
+
+Así, la diferencia de coste entre A y B incluye el manifiesto de ArquiGraph y nada más.
+
+### Lo que NO se pudo aislar
+
+Los **cuatro plugins** del autor siguen cargándose. `--bare` los eliminaría, pero **rompe la autenticación**: con esa bandera solo se admite `ANTHROPIC_API_KEY`, no la sesión OAuth de suscripción (`"Not logged in · Please run /login"`).
+
+Se asume como **offset constante en ambos brazos**: no altera la diferencia que mide R1, aunque infla la línea base y por tanto diluye el efecto relativo. Queda registrado en el `init` de cada ejecución y declarado en el informe.
+
+---
+
 ## 4. Decisión: `total_cost_usd` es la métrica primaria
 
 Con caché de por medio, "tokens totales" es una métrica ambigua: un token de `cache_read` no cuesta lo mismo que uno de entrada normal, ni que uno de `cache_creation`.
