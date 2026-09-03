@@ -1,0 +1,18 @@
+{
+  "task_id": "T011",
+  "kind": "synthetic",
+  "corpus": "tienda",
+  "bug_patch": "T011.bug.patch",
+  "problem_statement": "El pedido de 12 unidades a 10.00 con entrega en peninsula del cliente CLI-003 totaliza 119.72 cuando deberia totalizar 117.25.",
+  "test_command": "python -m pytest -q",
+  "fail_to_pass": [
+    "tests/test_pedidos.py::test_el_nivel_del_cliente_descuenta"
+  ],
+  "pass_to_pass": [
+    "tests/test_api_pedidos.py::test_crear_pedido_devuelve_201",
+    "tests/test_precios.py::test_resumen_con_descuento_de_fidelidad"
+  ],
+  "hint_files": [
+    "tienda/infraestructura/contexto.py"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "task_id": "T012",
+  "kind": "synthetic",
+  "corpus": "tienda",
+  "bug_patch": "T012.bug.patch",
+  "problem_statement": "Con 10 unidades en existencias, pedir 11 aborta la peticion con un error sin controlar en vez de responder 409.",
+  "test_command": "python -m pytest -q",
+  "fail_to_pass": [
+    "tests/test_api_pedidos.py::test_crear_pedido_sin_stock"
+  ],
+  "pass_to_pass": [
+    "tests/test_api_pedidos.py::test_crear_pedido_devuelve_201",
+    "tests/test_pedidos.py::test_pedido_por_encima_de_las_existencias_se_rechaza"
+  ],
+  "hint_files": [
+    "tienda/compartido/errores.py"
+  ]
+}

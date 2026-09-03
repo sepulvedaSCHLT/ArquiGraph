@@ -61,6 +61,40 @@ Esa frase **es el mapa**. Le dice al agente que hay una única causa común en c
 
 Una tarea difícil de navegar necesita lo contrario: un síntoma **local y concreto** cuya causa esté lejos, sin ninguna pista de que lo esté.
 
+## 4.1 La causa real, encontrada al escribir T009–T012
+
+La explicación anterior era incompleta. Al construir las tareas difíciles apareció el factor **dominante**, que yo no había visto:
+
+> **El bug de T007 también hacía fallar `test_dinero::test_porcentaje_redondea_el_empate_al_alza`.**
+> Correr `pytest` señalaba el archivo.
+
+El agente no navegó nada. Ejecutó los tests, leyó qué test fallaba, dedujo el módulo por el nombre, y lo arregló. Nueve turnos y 1% de varianza porque **el camino era determinista**.
+
+### La suite de tests es un oráculo
+
+En un corpus densamente testeado, `pytest` responde gratis la pregunta *"¿dónde está el bug?"* — que es exactamente la pregunta que ArquiGraph existe para responder.
+
+> **Una tarea solo mide navegación si el parche NO rompe ningún test cercano a la causa.**
+
+Es un criterio más afilado que "contar saltos", y es el que gobierna T009–T012: en las cuatro, la suite completa solo falla en el punto donde se observa el síntoma.
+
+Ejemplo, T010: el bug cambia el modo de redondeo en `compartido/dinero.py`, pero los empates que los tests de dinero e impuestos ya fijan **siguen dando el mismo resultado**. El único fallo aparece a tres saltos, en el total de un pedido con portes.
+
+### Consecuencia para la lectura del baseline
+
+Las tareas quedan en **dos grupos con naturaleza distinta**:
+
+| Grupo | Qué mide en realidad |
+|---|---|
+| **T001–T008** | Sobre todo, rapidez en correr `pytest` y leer el archivo que el test nombra |
+| **T009–T012** | Navegación de verdad: la suite no delata la causa |
+
+El informe debe distinguirlos. Mezclarlos daría una media que no significa nada, y **el efecto de ArquiGraph, si existe, debería verse casi solo en el segundo grupo**.
+
+### Coste de diseño
+
+Escribir estas cuatro obligó a poner las causas en módulos sin test directo (`repositorio_pedidos`, `contexto`, `errores`) o a elegir modos de fallo que esquivan los casos ya fijados. **El corpus está densamente testeado y casi cualquier frontera obvia está cubierta a un salto** — lo cual, irónicamente, es una virtud del corpus y un problema para el banco.
+
 ## 5. Qué hacer
 
 ### No tocar las ocho tareas existentes

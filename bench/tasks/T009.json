@@ -1,0 +1,19 @@
+{
+  "task_id": "T009",
+  "kind": "synthetic",
+  "corpus": "tienda",
+  "bug_patch": "T009.bug.patch",
+  "problem_statement": "El historial de pedidos de un cliente sale vacio. Despues de crear dos pedidos para CLI-001, consultar sus pedidos responde 200 con 0 pedidos cuando deberia devolver 2.",
+  "test_command": "python -m pytest -q",
+  "fail_to_pass": [
+    "tests/test_api_pedidos.py::test_dos_pedidos_seguidos_son_dos_pedidos",
+    "tests/test_pedidos.py::test_cada_pedido_recibe_su_identificador"
+  ],
+  "pass_to_pass": [
+    "tests/test_api_pedidos.py::test_crear_pedido_devuelve_201",
+    "tests/test_api_pedidos.py::test_consultar_pedido"
+  ],
+  "hint_files": [
+    "tienda/infraestructura/repositorio_pedidos.py"
+  ]
+}

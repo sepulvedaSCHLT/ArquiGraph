@@ -1,0 +1,18 @@
+{
+  "task_id": "T010",
+  "kind": "synthetic",
+  "corpus": "tienda",
+  "bug_patch": "T010.bug.patch",
+  "problem_statement": "Un pedido de un unico saco de 8.00 y 5 kg con entrega en peninsula totaliza 16.61 cuando deberia totalizar 16.60.",
+  "test_command": "python -m pytest -q",
+  "fail_to_pass": [
+    "tests/test_precios.py::test_resumen_con_portes_y_su_iva"
+  ],
+  "pass_to_pass": [
+    "tests/test_precios.py::test_resumen_de_pedido_con_envio_gratis",
+    "tests/test_impuestos.py::test_cuota_redondea_el_empate_al_alza"
+  ],
+  "hint_files": [
+    "tienda/compartido/dinero.py"
+  ]
+}

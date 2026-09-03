@@ -1,0 +1,11 @@
+--- a/tienda/infraestructura/repositorio_pedidos.py
++++ b/tienda/infraestructura/repositorio_pedidos.py
+@@ -36,7 +36,7 @@
+ 
+     def de_cliente(self, cliente: str) -> list[Pedido]:
+         clave = AlmacenEnMemoria.normalizar(cliente)
+-        return [p for p in self.listar() if AlmacenEnMemoria.normalizar(p.cliente) == clave]
++        return [p for p in self.listar() if AlmacenEnMemoria.normalizar(p.identificador) == clave]
+ 
+     def __len__(self) -> int:
+         return len(self._almacen)

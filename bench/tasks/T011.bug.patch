@@ -1,0 +1,11 @@
+--- a/tienda/infraestructura/contexto.py
++++ b/tienda/infraestructura/contexto.py
+@@ -59,7 +59,7 @@
+ CLIENTES_DEMO = (
+     Cliente("CLI-001", "Ana Ferrer", 0),
+     Cliente("CLI-002", "Bruno Salas", 150),
+-    Cliente("CLI-003", "Carla Ortiz", 620),
++    Cliente("CLI-003", "Carla Ortiz", 480),
+ )
+ 
+ 

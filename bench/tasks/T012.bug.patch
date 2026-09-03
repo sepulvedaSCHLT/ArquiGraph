@@ -1,0 +1,11 @@
+--- a/tienda/compartido/errores.py
++++ b/tienda/compartido/errores.py
+@@ -47,7 +47,7 @@
+     estado_http = 404
+ 
+ 
+-class StockInsuficiente(ErrorDeTienda):
++class StockInsuficiente(Exception):
+     codigo = "stock_insuficiente"
+     estado_http = 409
+ 
