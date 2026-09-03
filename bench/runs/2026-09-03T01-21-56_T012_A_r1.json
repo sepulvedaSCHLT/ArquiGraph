@@ -1,0 +1,170 @@
+{
+  "run_id": "2026-09-03T01-21-56_T012_A_r1",
+  "task_id": "T012",
+  "mode": "A",
+  "repetition": 1,
+  "started_at": "2026-09-03T01:21:56Z",
+  "agent": {
+    "claude_code_version": "2.1.259",
+    "model": "claude-sonnet-5",
+    "plugins": [
+      "superpowers@6.3.0",
+      "frontend-design",
+      "superdesign@0.6.0",
+      "ralph-loop@1.0.0"
+    ],
+    "mcp_servers": [],
+    "tools": [
+      "Bash",
+      "Edit",
+      "Read"
+    ],
+    "permission_mode": "default"
+  },
+  "isolation": {
+    "valid": true,
+    "deviations": []
+  },
+  "outcome": {
+    "success": true,
+    "fail_to_pass_ok": true,
+    "pass_to_pass_ok": true,
+    "is_error": false,
+    "stop_reason": "end_turn",
+    "timeout": false
+  },
+  "cost": {
+    "total_cost_usd": 0.14517919999999998,
+    "input_tokens": 30,
+    "output_tokens": 4102,
+    "cache_creation_input_tokens": 17076,
+    "cache_read_input_tokens": 178976,
+    "num_turns": 17,
+    "duration_ms": 51983
+  },
+  "trajectory": [
+    {
+      "turn": 2,
+      "tool": "Bash",
+      "input": {
+        "command": "ls ~/.claude/skills/ 2>/dev/null && find ~/.claude/skills -iname \"*debug*\"",
+        "description": "List available skills and find debugging skill"
+      }
+    },
+    {
+      "turn": 4,
+      "tool": "Bash",
+      "input": {
+        "command": "ls -la && find . -type f -name \"*.md\" | head -20",
+        "description": "List project files"
+      }
+    },
+    {
+      "turn": 5,
+      "tool": "Bash",
+      "input": {
+        "command": "find tienda -type f | sort",
+        "description": "List tienda module files"
+      }
+    },
+    {
+      "turn": 6,
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/bench-T012-gwlp4kp2/tienda/tienda/dominio/inventario.py"
+      }
+    },
+    {
+      "turn": 7,
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/bench-T012-gwlp4kp2/tienda/tienda/api/recursos_pedidos.py"
+      }
+    },
+    {
+      "turn": 9,
+      "tool": "Bash",
+      "input": {
+        "command": "grep -n \"reservar\\|disponible\\|Inventario\\|409\\|Conflicto\\|estado_http\" -r /tmp/bench-T012-gwlp4kp2/tienda/tienda/dominio/pedidos.py /tmp/bench-T012-gwlp4kp2/tienda/tienda/compartido/errores.py"
+      }
+    },
+    {
+      "turn": 10,
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/bench-T012-gwlp4kp2/tienda/tienda/compartido/errores.py"
+      }
+    },
+    {
+      "turn": 11,
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/bench-T012-gwlp4kp2/tienda/tienda/dominio/pedidos.py"
+      }
+    },
+    {
+      "turn": 14,
+      "tool": "Edit",
+      "input": {
+        "replace_all": false,
+        "file_path": "/tmp/bench-T012-gwlp4kp2/tienda/tienda/compartido/errores.py",
+        "old_string": "class StockInsuficiente(Exception):\n    codigo = \"stock_insuficiente\"\n    estado_http = 409",
+        "new_string": "class StockInsuficiente(ErrorDeTienda):\n    codigo = \"stock_insuficiente\"\n    estado_http = 409"
+      }
+    },
+    {
+      "turn": 16,
+      "tool": "Bash",
+      "input": {
+        "command": "grep -rn \"StockInsuficiente\" tests/ 2>/dev/null",
+        "description": "Check existing tests referencing StockInsuficiente"
+      }
+    },
+    {
+      "turn": 18,
+      "tool": "Bash",
+      "input": {
+        "command": "python -m pytest -q 2>&1 | tail -30",
+        "description": "Run test suite"
+      }
+    },
+    {
+      "turn": 20,
+      "tool": "Bash",
+      "input": {
+        "command": "python -c \"\nfrom tienda.infraestructura.contexto import Contexto\nfrom tienda.api.recursos_pedidos import crear_pedido\n\ncontexto = Contexto.nuevo()\ncontexto.inventario.registrar('ref-1', 10)\ncontexto.productos.registrar(referencia='ref-1', nombre='Prueba', precio_centavos=1000)\n\" 2>&1 | tail -20",
+        "description": "Explore contexto/productos API to build a repro"
+      }
+    },
+    {
+      "turn": 22,
+      "tool": "Bash",
+      "input": {
+        "command": "cat /tmp/bench-T012-gwlp4kp2/tienda/conftest.py"
+      }
+    },
+    {
+      "turn": 24,
+      "tool": "Bash",
+      "input": {
+        "command": "grep -n \"CAF-005\\|registrar\" /tmp/bench-T012-gwlp4kp2/tienda/tienda/infraestructura/contexto.py"
+      }
+    },
+    {
+      "turn": 26,
+      "tool": "Bash",
+      "input": {
+        "command": "sed -n '1,80p' /tmp/bench-T012-gwlp4kp2/tienda/tienda/infraestructura/contexto.py; echo ---; sed -n '1,60p' /tmp/bench-T012-gwlp4kp2/tienda/tienda/api/validacion.py"
+      }
+    },
+    {
+      "turn": 28,
+      "tool": "Bash",
+      "input": {
+        "command": "python -c \"\nfrom tienda.infraestructura.contexto import crear_contexto, poblar\nfrom tienda.infraestructura.reloj import RelojFijo\nfrom datetime import date\nfrom tienda.api.recursos_pedidos import crear_pedido\n\ncontexto = poblar(crear_contexto(RelojFijo(date(2026, 7, 15))))\nprint('existencias MOL-002:', contexto.inventario.existencias('MOL-002'))\n\ncuerpo = {\n    'cliente': 'CLI-001',\n    'zona': 'peninsula',\n    'lineas': [{'referencia': 'MOL-002', 'cantidad': 11}],\n}\nestado, respuesta = crear_pedido(contexto, cuerpo)\nprint(estado, respuesta)\n\"\n",
+        "description": "Repro: pedir 11 unidades cuando hay 10 en stock"
+      }
+    }
+  ],
+  "arquigraph": null
+}

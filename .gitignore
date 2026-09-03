@@ -7,10 +7,11 @@ graphify-out
 # --- Estado propio de ArquiGraph (regenerable) ---
 .arquigraph/
 
-# --- Resultados del banco (pesados; se publica solo el informe) ---
-# Las tareas (bench/tasks/) y la config (bench/config/) SI se versionan:
-# son lo que hace reproducible la medicion.
-bench/runs/
+# --- Banco de medicion ---
+# Los registros de bench/runs/ SI se versionan: son el dato que respalda
+# BASELINE.md y sin ellos la tabla no se puede verificar sin volver a
+# gastar en API. Son 332 KB, no un problema de tamano.
+# Solo se ignora el directorio de trabajo temporal.
 bench/workdir/
 
 # --- Python ---
